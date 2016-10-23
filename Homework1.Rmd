@@ -1,0 +1,303 @@
+---
+title: "Homework 1"
+author: "Jason Freeberg and Nikolay Anguelov"
+date: "October 9th, 2016"
+output: pdf_document
+---
+
+Question 1:
+Reading and viewing the bitmap image...
+
+```{r}
+set.seed(131)
+
+library(bmp)
+library(ggplot2)
+
+neatPrint <- function(listOfStrings){
+  cat(listOfStrings, fill = 1)
+}
+
+img = read.bmp("~/Documents/Fall/PSTAT131/homework1/image1.bmp")
+rotate = function(x) t(apply(x, 2, rev)) 
+img = rotate(img)
+img = scale(img, center=TRUE, scale=FALSE)
+
+gs = grey(seq(0, 1, length=256))
+image(img, asp=1, col=gs)
+```
+
+Part a:
+Principle components...
+
+```{r}
+pca.img <- prcomp(img)
+print( str(pca.img) )
+```
+
+Part b:
+
+```{r}
+checkPCA <- img %*% pca.img$rotation
+difference <- sum((pca.img$x - checkPCA))^2
+print(paste("Difference =", difference))
+```
+
+Part c:
+
+```{r}
+Q = pca.img$rotation
+I = diag( nrow(Q) )
+
+checkRotation = sum(t(Q) %*% Q - I)^2
+print(paste("Difference =", checkRotation))
+```
+
+Part d:
+
+```{r}
+Z = pca.img$x
+X = img
+Phi = pca.img$rotation
+
+tenPCs <- ( Z[,1:10] %*% t(Phi[,1:10]) ) - X
+hundredPCs <- ( Z[,1:100] %*% t(Phi[,1:100]) ) - X
+```
+```{r, echo = F}
+image(tenPCs, asp=1, col=gs)
+image(hundredPCs, asp=1, col=gs)
+```
+
+Part e:
+
+```{r}
+numerator = colSums(pca.img$x^2)
+denominator = sum(pca.img$x^2)
+
+PVE = numerator / denominator
+plot(PVE)
+
+cumPVE = cumsum(PVE)
+plot(cumPVE)
+```
+
+18 principle components will explain 90% of the total variance.
+
+Question #2
+
+a) Yes - This is a data mining task because the objective of the analysis is to group the data in such a way that would allow us to make predictions based on the variables associated with each individual. This requires some sort of data manipulation algorithm to properly split the data in order to place each individual into the proper category.
+b) No - Since the total sales of a company is essentially just the sum of the revenue generated from their products/services, this task would not necessarily be a data mining task since there is no grouping/handling of the data. There is really no need to preprocess or post process the sales data, nor is the purpose of this particular task to make some sort of prediction or provide a description of a trend present within the data.
+c) Yes - This is most certainly a data mining task as our objective in this particular task is to make a prediction about the future based on data we have collected. The data would need to be properly sorted, analyzed for associations, and ultimately a model would need to be created to make some sort of extrapolation about the future.
+d) Yes - Though this is a rather “simple” task, this would still be considered a data mining task, as there is a need to manipulate and organize a store of data in some particular manner. 
+e) No - This task is not a data mining task because there is really no data to work with in this particular case. Tossing a pair of dice has 36 finite outcomes, which one does not need a machine to generate, although it would make the process easier as opposed to rolling the dice physically and writing down the outcomes for n particular trials.
+
+Question #3
+Load data...
+
+```{r}
+URL = "http://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data"
+headers = c("Crime.Rate","ResiLand.Zoned","NonRetail.Bus","Charles.River","Nitr.Oxide", 
+            "Avg.Rooms","Age", "Wigh.Dist","Access.Idex","Tax","Pupil.Teacher","Blck", 
+            "Lower.Sts","Med.Value")
+
+housing = read.table(URL, col.names = headers)
+```
+
+Part a:
+
+```{r, echo=FALSE}
+a <- paste("Number of rows =", nrow(housing))
+b <- paste("Number of columns =", ncol(housing))
+
+neatPrint(c(a,b))
+```
+
+Explanation of variables:
+1. Crime.Rate       per capita crime rate by town
+
+2. ResiLand.Zoned   proportion of residential land zoned for lots over 25,000 sq.ft.
+
+3. NonRetail.Bus    proportion of non-retail business acres per town
+
+4. Charles.River    Charles River dummy variable (= 1 if tract bounds river; 0 otherwise)
+
+5. Nitr.Oxide       nitric oxides concentration (parts per 10 million)
+
+6. Avg.Rooms        average number of rooms per dwelling
+
+7. Age              proportion of owner-occupied units built prior to 1940
+
+8. Wigh.Dist        weighted distances to five Boston employment centres
+
+9. Access.Index     index of accessibility to radial highways
+
+10. Tax             full-value property-tax rate per $10,000
+
+11. Pupil.Teacher   pupil-teacher ratio by town
+
+12. Blck            1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town
+
+13. Lower.Sts       % lower status of the population
+
+14. Med.Value       Median value of owner-occupied homes in $1000's
+
+Part b:
+
+```{r}
+
+# Fix printing
+print(paste("The names of our columns are...", paste(names(housing), collapse = ", ")))
+
+```
+
+Part c and d:
+```{r, message=FALSE}
+
+ggplot(data = housing, aes(x = Med.Value)) +
+  geom_histogram(binwidth = 2) +
+  ggtitle("Histogram of median home \n value based on Boston Housing Data")
+
+ggplot(data = housing, aes(x = Med.Value, alpha = 0.2)) +
+  geom_histogram(binwidth = 1, aes(fill = "blue")) +
+  geom_histogram(binwidth = 5, aes(fill = "red")) + 
+  geom_histogram(binwidth = 15, aes(fill = "orange")) + 
+  geom_histogram(binwidth = 30, aes(fill = "black")) + 
+  ggtitle("Histogram of median home \n value based on Boston Housing Data") +
+  theme(legend.position = "none")
+
+```
+
+As the bin width increases, the data appears more normal than it really is. Once it reaches 15, however, we loose a lot of information about our data.
+
+Part e:
+
+```{r}
+a <- paste("Median =", median(housing$Med.Value))
+b <- paste("Mean =", mean(housing$Med.Value))
+c <- paste("Standard Dev. =", sd(housing$Med.Value))
+d <- paste("Median of the median suburb home prices =", median(housing$Med.Value))
+f <- summary(housing$Med.Value)
+
+print(f)
+neatPrint(c(a,b,c,d))
+```
+As we saw in the histogram (now the quantiles too) there is a spike of home prices near the maximum value. Because of this, the median is likely a better measure of central tendancy. The column Med.Value contains the median home price of the houses in that observation's immediate neighborhood, so we are still safe taking the median here. We are, however, loosing some information when we take the median of the neighborhood's median price.
+
+
+
+
+Part f:
+
+```{r}
+quants <- quantile(housing$Crime.Rate, probs = c(.0,.20,.40,.60,.80,1))
+
+housing$Crime.Bins <- cut(x = housing$Crime.Rate, quants, right = T)
+# Hard code the first value because it's the minimum and the intervals
+# are left-exclusive.
+housing$Crime.Bins[1] <- "(0.00632,0.0642]"
+housing$Crime.Bins <- as.factor(housing$Crime.Bins)
+
+ggplot(housing, aes(x = Crime.Bins, y = Med.Value, fill = Crime.Bins)) +
+  geom_boxplot() +
+  ggtitle("")
+
+```
+
+Question #4
+Part a
+
+```{r}
+library(ISLR)
+auto <- Auto
+
+# Directly created a new column using the $ operator instead of data.table().
+mpgMedian <- median(auto$mpg)
+auto$mpg01 <- ifelse(auto$mpg > mpgMedian, 1, 0)
+auto$mpg01 <- as.factor(auto$mpg01)
+```
+
+Part b
+
+```{r}
+auto$origin1 <- as.factor(auto$origin)
+
+ggplot(data = auto, mapping = aes(x = displacement, weight)) +
+  geom_point(mapping = aes(color = mpg01, 
+                           size = year, 
+                           shape= origin1,
+                           alpha = 0.30)) + 
+  ggtitle("Displacement and Weight, \n colored by MPG sized by Year")
+
+ggplot(data = auto, mapping = aes(x = mpg01, acceleration)) +
+  geom_boxplot(aes(fill = mpg01)) +
+  ggtitle("Boxplot of Acceleration, colored by MPG ")
+
+ggplot(data = auto, mapping = aes(x = mpg01, y = horsepower)) +
+  geom_boxplot(aes(fill = mpg01)) +
+  ggtitle("Boxplot of Horsepower colored by MPG")
+
+```
+In order to make a strong prediction of mpg01, we choose to look at three particular relationships.
+Our first plot looked at the relationship between displacement and weight, colored by mpg01 values, and sized by Year. This plot had an immediately obvious trend present: The heavier the car and the larger the displacement, the less likely the car was to have an mpg value that was greater than the median of the entire set. As the car's production year increased, the car was more likely to have an mpg value over the median.  Basically all of the cars that did achieve a value of 1 for mpg01 were clustered in the bottom left corner, indicating that the lower the weight and displacement of a vehicle, the more likely it is to obtain good MPG values.
+
+The second was the relationship between year and acceleration, again sorted by the value of mpg01. In our plot, we found that year had more of an effect on whether the value mpg01 was higher than the overall mpg median or not. Amongst older cars, we found that lower accelerations pointed towards a 0 value for mpg01, while among newer cars it appeared that despite a low acceleration value, mpg01 still took on a value of 1.
+Our final plot was a boxplot of horsepower for each value of mpg01. The first thing we noticed from this plot was the fact that the mean horsepower for vehicles which obtained a value of 1 for mpg01 was almost half the mean of those which obtained a value of 0. This indicates to us that vehicles with lower horsepower are more likely to be more fuel efficient. In addition, the spread of the data for mpg01 with values 1 was much tighter than that of mpg01 for values of 0. This indicates that there is a much smaller range of horsepower values which will provide an mpg01 value of 1. 
+
+Part c
+
+```{r}
+
+sample75 <- sample( (1:nrow(auto)), nrow(auto)*0.75 )
+sample25 <- ( 1:nrow(auto) )[-sample75]
+
+train.set <- auto[sample75, ]
+test.set <- auto[sample25, ]
+
+```
+
+Part d
+
+```{r}
+library(class)
+library(data.table)
+notThesePredictors <- c("origin", "name", "mpg")
+
+train.set <- train.set[, !(names(train.set) %in% notThesePredictors)]
+test.set <- test.set[, !(names(test.set) %in% notThesePredictors)]
+
+k3 <- knn(train = train.set[,!(names(train.set) %in% c("mpg01"))], 
+          test = test.set[,!(names(test.set) %in% c("mpg01"))],
+          cl = train.set$mpg01,
+          k = 3)
+
+k8 <- knn(train = train.set[,!(names(train.set) %in% c("mpg01"))], 
+          test = test.set[,!(names(test.set) %in% c("mpg01"))],
+          cl = train.set$mpg01,
+          k = 8)
+
+k12 <- knn(train = train.set[,!(names(train.set) %in% c("mpg01"))], 
+          test = test.set[,!(names(test.set) %in% c("mpg01"))],
+          cl = train.set$mpg01,
+          k = 12)
+
+testResults <- data.table(test.set$mpg01, k3, k8, k12)
+
+denom = nrow(testResults)
+
+k3Correct <- sum(testResults$V1 == testResults$k3)
+k8Correct <- sum(testResults$V1 == testResults$k8)
+k12Correct <- sum(testResults$V1 == testResults$k12)
+
+k3Correct <- k3Correct / denom
+k8Correct <- k8Correct / denom
+k12Correct <- k12Correct / denom
+
+a <- paste("% correct with K = 3...", k3Correct)
+b <- paste("% correct with K = 8...", k8Correct)
+c <- paste("% correct with K = 12...", k12Correct)
+
+neatPrint(c(a,b,c))
+```
+Our models excluded origin, name, and mpg as predictors. Origin seemed to be very mixed on the border between the classes on the first scatterplot. Name has too many unique values to be a worthwhile predictor, and mpg is practically what we are predicting so it doesn't make sense to keep it as a predictor.
+
+On the test set, K = 3 performed better than K = 8 and K = 12. It is possible that a value for K between 3 and 8 could have outperformed all three. 
