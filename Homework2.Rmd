@@ -5,4 +5,74 @@ date: "23 October 2016"
 output: pdf_document
 ---
 
-test2
+```{r}
+
+neatPrint <- function(listOfStrings){
+  cat(listOfStrings, fill = 1)
+}
+
+data(iris)
+iris = as.data.frame(iris)
+X.iris = iris[, c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width')]
+Y.iris = iris[,'Species']
+#sample80 <- sample((1:nrow(iris)), nrow(iris)*0.80)
+#sample20 <- sample(1:nrow(iris))[-sample80]
+#trainset <- iris[sample80, ]
+#testset <- iris[sample20, ]
+
+k2 <- knn(train= iris[,!(names(iris) %in% c("Species"))],
+          test = iris[, !(names(iris) %in% c("Species"))],
+          cl = iris$Species, k=2)
+
+testresults <- data.table(iris$Species, k2)
+denom = nrow(testresults)
+k2correct <- sum(testresults$V1 == testresults$k2)
+k2correct <- k2correct/denom
+a <- paste("% correct with K=2...", k2correct)
+neatPrint(c(a))
+
+
+
+
+
+k2cv <- knn.cv(train = X.iris, cl=Y.iris, k=2)
+pred0 <- data.frame(k2cv, iris$Species)
+numincorrect0 <- sum(pred0$k2cv != pred0$iris.Species)
+errorrate0 <- numincorrect0/nrow(pred0)
+errorrate0
+#COME BACK TO PART B... FIND OPTIMAL K
+fit <- lda(Species ~ ., data=iris, CV=TRUE)
+pred <- data.frame(fit$class, iris$Species)
+numincorrect <- sum(pred$fit.class!=pred$iris.Species)
+errorrate <- numincorrect/nrow(pred)
+
+
+
+
+fit2 <- qda(Species ~ ., data=iris, CV=TRUE)
+pred2<- data.frame(fit2$class, iris$Species)
+numincorrect2 <- sum(pred2$fit2.class != pred2$iris.Species)
+errorrrate2 <- numincorrect2/nrow(pred2)
+errorrrate2
+#LDA appears to be the strongest model because the test error rate is the lowest. It should be noted that QDA's test error rate was very clsoe to LDA's, so it is not 100% clear which model one should select.
+
+
+```
+
+```{r}
+#Problem 3
+seeds =
+read.table('http://archive.ics.uci.edu/ml/machine-learning-databases/00236/seeds_dataset.txt')
+names(seeds) = c('area', 'perimeter', 'compactness', 'length',
+'width', 'asymmetry', 'groovelength', 'type')
+seeds.label = factor(seeds$type)
+seeds.orig = seeds[,-ncol(seeds)]
+seeds = as.data.frame(scale(seeds.orig))
+seeds.pca <- prcomp(seeds)
+summary(seeds.pca)
+#Proportion of variance explained by first 3 PC = 0.98668
+cor(seeds)
+kmeans <- kmeans(seeds.pca$x[, c(1,2)])
+```
+
+
