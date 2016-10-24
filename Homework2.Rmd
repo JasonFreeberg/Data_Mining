@@ -1,6 +1,6 @@
 ---
 title: "Homework 2"
-author: Jason Freeberg and Nikolay Anguelov
+author: "Jason Freeberg and Nikolay Anguelov"
 date: "23 October 2016"
 output: pdf_document
 ---
