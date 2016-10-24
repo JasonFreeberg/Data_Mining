@@ -6,6 +6,9 @@ output: pdf_document
 ---
 
 ```{r}
+library(class)
+library(MASS)
+library(data.table)
 
 neatPrint <- function(listOfStrings){
   cat(listOfStrings, fill = 1)
