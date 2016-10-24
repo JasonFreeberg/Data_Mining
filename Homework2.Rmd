@@ -6,6 +6,10 @@ output: pdf_document
 ---
 
 ```{r}
+library(class)
+library(MASS)
+library(data.table)
+library(ggplot2)
 
 neatPrint <- function(listOfStrings){
   cat(listOfStrings, fill = 1)
@@ -67,10 +71,23 @@ names(seeds) = c('area', 'perimeter', 'compactness', 'length',
 'width', 'asymmetry', 'groovelength', 'type')
 seeds.label = factor(seeds$type)
 seeds.orig = seeds[,-ncol(seeds)]
+
 seeds = as.data.frame(scale(seeds.orig))
 seeds.pca <- prcomp(seeds)
 summary(seeds.pca)
 #Proportion of variance explained by first 3 PC = 0.98668
 cor(seeds)
-kmeans <- kmeans(seeds.pca$x[, c(1,2)])
+
+pcaLoadings <- as.data.frame(seeds.pca$x)
+kmeans3 <- kmeans(centers = 3, x = pcaLoadings[, c(1,2)])
+kmeans4 <- kmeans(centers = 3, x = pcaLoadings[, c(1,2)])
+kmeans5 <- kmeans(centers = 3, x = pcaLoadings[, c(1,2)])
+
+seeds$k3 <- as.factor(kmeans3$cluster)
+seeds$k4 <- kmeans4$cluster
+seeds$k5 <- kmeans5$cluster
+
+ggplot(data = pcaLoadings) +
+  geom_point(mapping = aes(x= PC1, y = PC2, color = seeds$k3))
+
 ```
