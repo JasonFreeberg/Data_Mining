@@ -8,10 +8,14 @@ output: pdf_document
 Question 1
 Part A
 ```{r}
+set.seed(1)
+
 library(class)
 library(MASS)
 library(data.table)
 library(ggplot2)
+library(tree)
+library(ggdendro)
 
 neatPrint <- function(listOfStrings){
   cat(listOfStrings, fill = 1)
@@ -47,9 +51,9 @@ errorrate0
 Part C
 ```{r}
 fit <- lda(Species ~ ., data=iris, CV=TRUE)
-pred <- data.frame(fit$class, iris$Species)
+pred1 <- data.frame(fit$class, iris$Species)
 numincorrect <- sum(pred$fit.class!=pred$iris.Species)
-errorrate <- numincorrect/nrow(pred)
+errorrate <- numincorrect/nrow(pred1)
 ```
 
 Part D
@@ -73,9 +77,81 @@ Part F
 
 Question 2
 Part A
-...
-...
-...
+```{r}
+# Load data
+spam <- read.table("spambase.dat", header = T, sep = "")
+spam$y = factor(spam$y, levels=c(0,1), labels=c("good","spam"))
+
+# Sample data indices, the seed is set in the first code chunk.
+testIndices <- sample(1:nrow(spam), size = 1000)
+trainIndices <- -testIndices
+
+# Use index samples to select observations
+spamtest <- spam[testIndices, ]
+spamtrain <- spam[trainIndices, ]
+```
+
+Part B, 1
+```{r}
+
+basictree <- tree(spamtrain, formula = y ~ .)
+# How do we prune the tree?? Do we use "prunedtree <- prune.tree(basictree)"? I didn't see a difference 
+# For now, I will use the base tree as a placeholder.
+prunedtree <- basictree
+tree_data <- dendro_data(prunedtree)
+
+# Clean ggplot of the data
+ggplot(segment(tree_data)) +
+  geom_segment(aes(x = x, y = y, xend = xend, yend = yend), 
+                 colour = "blue") +
+   geom_text(data = label(tree_data), 
+              aes(x = x, y = y, label = label), vjust = -0.5, size = 3) +
+    geom_text(data = leaf_label(tree_data), 
+              aes(x = x, y = y, label = label), vjust = 0.5, size = 2) +
+    theme_dendro()
+
+# Merge the true values from spamtest and predicted values from model
+pred3 <- as.data.frame(predict(prunedtree, newdata = spamtest, type = "class"))
+pred3 <- data.frame(list("true" = spamtest$y, "predicted" = pred3[,1]))
+
+# Sum all instances where the two are unequal, divide by total observations
+treeError1 <- sum(pred3$true != pred3$predicted) / nrow(pred3)
+```
+
+Part B, 2
+```{r}
+# A tree with the control parameters
+controltree <- tree(data = spamtrain, 
+                   formula = y ~ ., 
+                   control = tree.control(nrow(spamtrain), mincut = 2, minsize = 5, mindev = 0.001))
+
+# Merge the true values from spamtest and predicted values from model
+pred4 <- as.data.frame(predict(prunedtree, newdata = spamtest, type = "class"))
+pred4 <- data.frame(list("true" = spamtest$y, "predicted" = pred4[,1]))
+
+# Sum all instances where the two are unequal, divide by total observations
+treeError2 <- sum(pred4$true != pred4$predicted) / nrow(pred4)
+```
+
+Part B, 3
+```{r}
+# Random forest
+
+```
+
+Part B, 5
+```{r}
+# Skip the 4th bullet point because that's for 231 students.
+
+# Make the model
+logit = glm(data = spamtrain, formula = y ~ ., family = binomial(link = "logit"))
+
+# Merge the true values from spamtest and predicted values from model
+pred6 <- predict(object = logit, newdata = spamtest)
+pred6 <- data.frame(list("true" = spamtest$y, "predicted" = pred4[,1]))
+
+logitError <- sum(pred6$true != pred6$predicted) / nrow(pred6)
+```
 
 
 Question 3
