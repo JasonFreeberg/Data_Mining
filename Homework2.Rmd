@@ -45,15 +45,16 @@ pred0 <- data.frame(k2cv, iris$Species)
 numincorrect0 <- sum(pred0$k2cv != pred0$iris.Species)
 errorrate0 <- numincorrect0/nrow(pred0)
 errorrate0
-#COME BACK TO PART B... FIND OPTIMAL K
+# COME BACK TO PART B... FIND OPTIMAL K
 ```
 
 Part C
 ```{r}
 fit <- lda(Species ~ ., data=iris, CV=TRUE)
 pred1 <- data.frame(fit$class, iris$Species)
-numincorrect <- sum(pred$fit.class!=pred$iris.Species)
-errorrate <- numincorrect/nrow(pred1)
+numincorrect <- sum(pred1$fit.class!=pred1$iris.Species)
+errorrate1 <- numincorrect/nrow(pred1)
+errorrate1
 ```
 
 Part D
@@ -71,9 +72,79 @@ LDA appears to be the strongest model because the test error rate is the lowest.
 
 Part F
 ```{r}
+# Bootstrap 100 times
+runs <- 1:100
 
+# Lists to save the results
+knnErrors = vector()
+ldaErrors = vector()
+qdaErrors = vector()
 
+for (i in runs){
+  print(i)
+  sampleIndex <- sample(1:nrow(iris), size = nrow(iris), replace = TRUE)
+  sampleData <- iris[sampleIndex, ]
+  
+  # Fit the three models
+  # Use a different value for K?
+  KNNfit <- knn.cv(train = sampleData[, 1:4], cl = sampleData[, 5], k = 2)
+  LDAfit <- lda(Species ~ ., data = sampleData, CV = T)
+  QDAfit <- qda(Species ~ ., data = sampleData, CV = T)
+  
+  # Compute error rates
+  knnError <- sum(KNNfit != sampleData$Species) / nrow(sampleData)
+  ldaError <- sum(LDAfit$class != sampleData$Species) / nrow(sampleData)
+  qdaError <- sum(QDAfit$class != sampleData$Species) / nrow(sampleData)
+  
+  # Save error rates
+  knnErrors[i] = knnError
+  ldaErrors[i] = ldaError
+  qdaErrors[i] = qdaError
+}
+
+# Aggregate results
+knnMean <- mean(knnErrors)
+knnVar <- var(knnErrors)
+
+ldaMean <- mean(ldaErrors)
+ldaVar <- var(ldaErrors)
+
+qdaMean <- mean(qdaErrors)
+qdaVar <- var(qdaErrors)
+
+a <- paste("Mean KNN Error =", knnMean)
+b <- paste("Variance of KNN Error =", knnVar)
+
+c <- paste("Mean LDA Error =", ldaMean)
+d <- paste("Variance of LDA Error =", ldaVar)
+
+e <- paste("Mean QDA Error =", qdaMean)
+f <- paste("Variance of QDA Error =", qdaVar)
+
+neatPrint(c(a,b,c,d,e,f))
 ```
+
+QDA achieved the lowest average error rate and lowest variance over the 100 bootstrap resamplings. Therefore we would choose to use QDA.
+
+Part G
+```{r}
+dt = data.frame(Sepal.Length=c(4,6), Sepal.Width=c(2.5,4), Petal.Length=c(3,1.8), Petal.Width=c(0.5,1.5))
+
+ldaModel <- lda(Species ~ ., data = iris)
+qdaModel <- qda(Species ~ ., data = iris)
+
+ldaLabels <- predict(ldaModel, dt)
+qdaLabels <- predict(qdaModel, dt)
+knnLabels <- knn(train = iris[, 1:4], cl = iris$Species, test = dt, k = 2) # Come back and edit best K
+#### dsfIXDVHIUSIJOFVHUBGYDFHSAOJSVBYSAHUJOVFGUYSEDHWISEFT67W8Y2HIU3RB2EFY78GEYU2R3WFD
+
+a <- paste("Predicted KNN labels =", paste(knnLabels, collapse = ', '))
+b <- paste("Predicted LDA labels =", paste(ldaLabels$class, collapse = ", "))
+c <- paste("Predicted QDA labels =", paste(qdaLabels$class, collapse = ", "))
+
+neatPrint(c(a,b,c))
+```
+
 
 Question 2
 Part A
@@ -170,7 +241,7 @@ summary(seeds.pca)
 cor(seeds)
 ```
 
-The proportion of vairance explained by PC1 and PC2 = 0.98668.
+The proportion of vairance explained by PC1 and PC2 = 0.8898.
 
 Part B
 ```{r}
@@ -192,7 +263,30 @@ plot1 <- ggplot(data = pcaLoadings) +
 
 Part C
 ```{r}
+# 
+PCAdist <- dist(x = pcaLoadings[,c(1,2)])
 
+complete <- hclust(d = PCAdist, method = "complete")
+single <- hclust(d = PCAdist, method = "single")
+average <- hclust(d = PCAdist, method = "average")
 
+ggdendrogram(complete)
+ggdendrogram(single)
+ggdendrogram(average)
+
+# Cut complete linkage object
+cluster3 <- cutree(complete, k = 3)
+cluster4 <- cutree(complete, k = 4)
+cluster5 <- cutree(complete, k = 5)
+
+plotc3 <- ggplot(data = pcaLoadings) +
+  geom_point(mapping = aes(x= PC1, y = PC2, color = as.factor(cluster3))) +
+  theme
+
+plotc4 <- ggplot(data = pcaLoadings) +
+  geom_point(mapping = aes(x= PC1, y = PC2, color = as.factor(cluster4))) 
+
+plotc5 <- ggplot(data = pcaLoadings) +
+  geom_point(mapping = aes(x= PC1, y = PC2, color = as.factor(cluster5))) 
 ```
 
