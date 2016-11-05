@@ -224,8 +224,6 @@ pred4 <- data.frame(list("true" = spamtest$y, "predicted" = pred4[,1]))
 treeError2 <- sum(pred4$true != pred4$predicted) / nrow(pred4)
 ```
 
--- talk about results --
-
 Part B, 3
 ```{r}
 # Random forest
@@ -266,10 +264,12 @@ plot(perf1, col = 1, ylab= "True Positive Rate",
      main = "Comparison of \n ROC Curves")
 plot(perf2, add = T, col = 2)
 plot(perf3, add = T, col = 3)
+legend(0.2,0.4, c("Control Tree" , "Random Forest", "Pruned Tree"), fill=c(2,3,4))
 ```
 
--- add text with the color assignments here -- 
-And the interpretation
+
+From the plots of the ROC curves, we choose the Random Forest clustering model, as the ROC curve is
+closest to the ideal ROC curve.
 
 Question 3
 Part A
